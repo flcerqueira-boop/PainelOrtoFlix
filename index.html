@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OrtoFlix Painel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --red: #C0392B;
+    --red-light: #FDECEA;
+    --green: #1D9E75;
+    --green-light: #EAF3DE;
+    --amber: #B45309;
+    --amber-light: #FEF3C7;
+    --blue: #185FA5;
+    --blue-light: #E6F1FB;
+    --purple: #3C3489;
+    --purple-light: #EEEDFE;
+    --gray-50: #F9FAFB;
+    --gray-100: #F3F4F6;
+    --gray-200: #E5E7EB;
+    --gray-400: #9CA3AF;
+    --gray-600: #4B5563;
+    --gray-800: #1F2937;
+    --border: #E5E7EB;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--gray-50);
+    color: var(--gray-800);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* TOPBAR */
+  .topbar {
+    background: #fff;
+    border-bottom: 1px solid var(--border);
+    padding: 0 16px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo { font-size: 16px; font-weight: 600; color: var(--gray-800); letter-spacing: -0.4px; }
+  .logo em { color: var(--red); font-style: normal; }
+  .logo span { font-weight: 400; font-size: 13px; color: var(--gray-400); margin-left: 4px; }
+  .topbar-right { display: flex; align-items: center; gap: 6px; }
+  .refresh-btn {
+    width: 34px; height: 34px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border); background: transparent;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--gray-600); font-size: 15px;
+    transition: background 0.15s;
+  }
+  .refresh-btn:hover { background: var(--gray-100); }
+  .refresh-btn.spinning svg { animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* SEARCH */
+  .search-wrap { padding: 12px 16px 0; }
+  .search-box {
+    display: flex; align-items: center; gap: 10px;
+    background: #fff; border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 10px 14px;
+  }
+  .search-box svg { color: var(--gray-400); flex-shrink: 0; }
+  .search-box input {
+    border: none; outline: none; background: transparent;
+    font-size: 14px; font-family: 'Inter', sans-serif;
+    color: var(--gray-800); width: 100%;
+  }
+  .search-box input::placeholder { color: var(--gray-400); }
+
+  /* TABS */
+  .tabs-wrap { padding: 10px 16px 0; }
+  .tabs {
+    display: flex; background: #fff;
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 3px; gap: 2px;
+  }
+  .tab {
+    flex: 1; padding: 7px 4px; font-size: 12px; font-weight: 500;
+    border: none; background: transparent; border-radius: var(--radius-sm);
+    cursor: pointer; color: var(--gray-400); font-family: 'Inter', sans-serif;
+    transition: all 0.15s; white-space: nowrap;
+  }
+  .tab.active { background: var(--gray-100); color: var(--gray-800); }
+
+  /* FILTERS */
+  .filters-wrap { padding: 10px 16px 0; display: flex; gap: 6px; overflow-x: auto; }
+  .filters-wrap::-webkit-scrollbar { display: none; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 5px 12px; border-radius: 99px;
+    border: 1px solid var(--border); background: #fff;
+    font-size: 12px; font-weight: 500; color: var(--gray-600);
+    cursor: pointer; white-space: nowrap; font-family: 'Inter', sans-serif;
+    transition: all 0.15s;
+  }
+  .chip.active { background: var(--red); border-color: var(--red); color: #fff; }
+
+  /* METRICS */
+  .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px 16px 0; }
+  .metric {
+    background: #fff; border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 14px;
+  }
+  .metric-label { font-size: 11px; color: var(--gray-400); font-weight: 500; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 6px; }
+  .metric-value { font-size: 24px; font-weight: 600; color: var(--gray-800); line-height: 1; }
+  .metric-value.green { color: var(--green); }
+  .metric-value.red { color: var(--red); }
+  .metric-value.amber { color: var(--amber); }
+  .metric-sub { font-size: 11px; color: var(--gray-400); margin-top: 4px; }
+
+  /* SECTION */
+  .section-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 16px 8px; }
+  .section-title { font-size: 11px; font-weight: 600; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.5px; }
+  .section-count { font-size: 12px; color: var(--gray-400); }
+
+  /* CARDS */
+  .card {
+    background: #fff; border: 1px solid var(--border);
+    border-radius: var(--radius); margin: 0 16px 8px;
+    padding: 14px; box-shadow: var(--shadow);
+  }
+  .card-row { display: flex; align-items: center; gap: 12px; }
+  .avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: var(--blue-light); display: flex; align-items: center;
+    justify-content: center; font-size: 12px; font-weight: 600;
+    color: var(--blue); flex-shrink: 0;
+  }
+  .card-info { flex: 1; min-width: 0; }
+  .card-name { font-size: 14px; font-weight: 500; color: var(--gray-800); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-email { font-size: 12px; color: var(--gray-400); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+  .divider { height: 1px; background: var(--border); margin: 10px 0; }
+  .detail-row { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; }
+  .detail-label { font-size: 12px; color: var(--gray-400); }
+  .detail-value { font-size: 12px; font-weight: 500; color: var(--gray-800); }
+
+  /* BADGES */
+  .badge {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: 11px; font-weight: 600; padding: 3px 8px;
+    border-radius: 99px; white-space: nowrap;
+  }
+  .badge-active { background: var(--green-light); color: #27500A; }
+  .badge-delayed { background: var(--amber-light); color: #854F0B; }
+  .badge-cancelled { background: var(--red-light); color: #A32D2D; }
+  .badge-inactive { background: var(--gray-100); color: var(--gray-600); }
+  .badge-cupom { background: var(--purple-light); color: var(--purple); }
+
+  /* REEMBOLSO CARD */
+  .rcard {
+    background: #fff; border: 1px solid var(--border);
+    border-radius: var(--radius); margin: 0 16px 8px;
+    padding: 14px; box-shadow: var(--shadow);
+  }
+  .rcard-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+  .rcard-nome { font-size: 14px; font-weight: 500; color: var(--gray-800); }
+  .rcard-meta { font-size: 12px; color: var(--gray-400); margin-top: 2px; }
+  .dias-ok { background: var(--green-light); color: #27500A; }
+  .dias-out { background: var(--red-light); color: #A32D2D; }
+  .btn-row { display: flex; gap: 8px; margin-top: 12px; }
+  .btn {
+    flex: 1; padding: 9px; font-size: 13px; font-weight: 500;
+    border-radius: var(--radius-sm); border: 1px solid var(--border);
+    background: transparent; cursor: pointer; font-family: 'Inter', sans-serif;
+    color: var(--gray-800); transition: all 0.15s;
+  }
+  .btn:hover { background: var(--gray-100); }
+  .btn.primary { background: var(--red); border-color: var(--red); color: #fff; }
+  .btn.primary:hover { background: #a93226; }
+  .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  /* RENOVAÇÃO ROWS */
+  .renov-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+  }
+  .renov-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .renov-nome { font-size: 14px; font-weight: 500; color: var(--gray-800); }
+  .renov-meta { font-size: 12px; color: var(--gray-400); margin-top: 1px; }
+  .renov-valor { font-size: 14px; font-weight: 600; color: var(--gray-800); }
+
+  /* PANELS */
+  .panel { display: none; padding-bottom: 24px; }
+  .panel.active { display: block; }
+
+  /* LOADING / EMPTY */
+  .loading-state, .empty-state {
+    text-align: center; padding: 3rem 1rem;
+    color: var(--gray-400); font-size: 14px;
+  }
+  .loading-spinner {
+    width: 28px; height: 28px; border: 2px solid var(--border);
+    border-top-color: var(--red); border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 12px;
+  }
+  .error-state {
+    background: var(--red-light); border: 1px solid #FECACA;
+    border-radius: var(--radius); margin: 12px 16px;
+    padding: 14px; font-size: 13px; color: #A32D2D;
+  }
+
+  /* LOAD MORE */
+  .load-more-wrap { padding: 4px 16px 0; }
+  .load-more-btn {
+    width: 100%; padding: 11px; font-size: 13px; font-weight: 500;
+    border: 1px solid var(--border); border-radius: var(--radius);
+    background: #fff; cursor: pointer; font-family: 'Inter', sans-serif;
+    color: var(--gray-600); transition: background 0.15s;
+  }
+  .load-more-btn:hover { background: var(--gray-100); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo"><em>Orto</em>Flix <span>painel</span></div>
+  <div class="topbar-right">
+    <button class="refresh-btn" id="refreshBtn" onclick="refreshData()" title="Atualizar dados">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<div class="search-wrap">
+  <div class="search-box">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="text" id="searchInput" placeholder="Buscar por nome ou e-mail…" oninput="onSearch()">
+  </div>
+</div>
+
+<div class="tabs-wrap">
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('assinantes', this)">Assinantes</button>
+    <button class="tab" onclick="switchTab('reembolsos', this)">Reembolsos</button>
+    <button class="tab" onclick="switchTab('renovacoes', this)">Renovações</button>
+    <button class="tab" onclick="switchTab('cancelamentos', this)">Cancelamentos</button>
+  </div>
+</div>
+
+<!-- ASSINANTES -->
+<div id="panel-assinantes" class="panel active">
+  <div class="filters-wrap">
+    <button class="chip active" onclick="setPlanoFilter('', this)">Todos</button>
+    <button class="chip" onclick="setPlanoFilter('Mensal', this)">Mensal</button>
+    <button class="chip" onclick="setPlanoFilter('Semestral', this)">Semestral</button>
+    <button class="chip" onclick="setPlanoFilter('Anual', this)">Anual</button>
+    <button class="chip" onclick="setPlanoFilter('cupom', this)">🎟 Com cupom</button>
+  </div>
+  <div class="metrics" id="metricsAssinantes">
+    <div class="metric"><div class="metric-label">Ativos</div><div class="metric-value green" id="totalAtivos">—</div></div>
+    <div class="metric"><div class="metric-label">Inadimplentes</div><div class="metric-value amber" id="totalDelayed">—</div></div>
+    <div class="metric"><div class="metric-label">Plano anual</div><div class="metric-value" id="totalAnual">—</div></div>
+    <div class="metric"><div class="metric-label">Com cupom</div><div class="metric-value" id="totalCupom">—</div></div>
+  </div>
+  <div class="section-header">
+    <span class="section-title" id="labelAssinantes">Todos os planos</span>
+    <span class="section-count" id="countAssinantes"></span>
+  </div>
+  <div id="listaAssinantes"><div class="loading-state"><div class="loading-spinner"></div>Carregando assinantes…</div></div>
+  <div class="load-more-wrap"><button class="load-more-btn" id="btnMaisAssinantes" style="display:none" onclick="loadMore()">Carregar mais</button></div>
+</div>
+
+<!-- REEMBOLSOS -->
+<div id="panel-reembolsos" class="panel">
+  <div class="filters-wrap">
+    <button class="chip active" onclick="setReembolsoFilter('aberto', this)">Em aberto</button>
+    <button class="chip" onclick="setReembolsoFilter('7dias', this)">Últimos 7 dias</button>
+    <button class="chip" onclick="setReembolsoFilter('30dias', this)">Últimos 30 dias</button>
+  </div>
+  <div class="metrics">
+    <div class="metric"><div class="metric-label">Em aberto</div><div class="metric-value red" id="totalReembolsosAberto">0</div><div class="metric-sub">aguardando ação</div></div>
+    <div class="metric"><div class="metric-label">Dentro do prazo</div><div class="metric-value green" id="totalDentroPrazo">0</div><div class="metric-sub">têm direito</div></div>
+  </div>
+  <div class="section-header"><span class="section-title">Pedidos de reembolso</span></div>
+  <div id="listaReembolsos">
+    <div class="empty-state">Nenhum pedido de reembolso registrado.<br>Adicione manualmente os pedidos recebidos.</div>
+  </div>
+  <div style="padding: 0 16px;">
+    <button class="btn primary" style="width:100%;margin-top:4px" onclick="addReembolso()">+ Registrar pedido de reembolso</button>
+  </div>
+</div>
+
+<!-- RENOVAÇÕES -->
+<div id="panel-renovacoes" class="panel">
+  <div class="filters-wrap">
+    <button class="chip active" onclick="setRenovFilter(7, this)">7 dias</button>
+    <button class="chip" onclick="setRenovFilter(15, this)">15 dias</button>
+    <button class="chip" onclick="setRenovFilter(30, this)">30 dias</button>
+  </div>
+  <div class="metrics">
+    <div class="metric"><div class="metric-label">Renovações previstas</div><div class="metric-value" id="totalRenovacoes">—</div></div>
+    <div class="metric"><div class="metric-label">Receita prevista</div><div class="metric-value green" id="receitaRenovacoes">—</div></div>
+  </div>
+  <div class="section-header"><span class="section-title">Próximas renovações</span></div>
+  <div class="card" id="listaRenovacoes"><div class="loading-state"><div class="loading-spinner"></div>Carregando…</div></div>
+</div>
+
+<!-- CANCELAMENTOS -->
+<div id="panel-cancelamentos" class="panel">
+  <div class="filters-wrap">
+    <button class="chip active" onclick="setCancelFilter('todos', this)">Todos</button>
+    <button class="chip" onclick="setCancelFilter('7dias', this)">7 dias</button>
+    <button class="chip" onclick="setCancelFilter('30dias', this)">30 dias</button>
+    <button class="chip" onclick="setCancelFilter('Mensal', this)">Mensal</button>
+    <button class="chip" onclick="setCancelFilter('Semestral', this)">Semestral</button>
+    <button class="chip" onclick="setCancelFilter('Anual', this)">Anual</button>
+    <button class="chip" onclick="setCancelFilter('cupom', this)">🎟 Com cupom</button>
+  </div>
+  <div class="metrics">
+    <div class="metric"><div class="metric-label">Total</div><div class="metric-value red" id="totalCancelamentos">—</div></div>
+    <div class="metric"><div class="metric-label">Plano anual</div><div class="metric-value" id="cancelAnual">—</div></div>
+  </div>
+  <div class="section-header">
+    <span class="section-title">Cancelamentos</span>
+    <span class="section-count" id="countCancelamentos"></span>
+  </div>
+  <div id="listaCancelamentos"><div class="loading-state"><div class="loading-spinner"></div>Carregando…</div></div>
+</div>
+
+<script>
+const WORKER_URL = 'https://ortoflix-hotmart-proxy.flcerqueira.workers.dev';
+
+let allSubscriptions = [];
+let nextPageToken = null;
+let isLoading = false;
+let currentPlanoFilter = '';
+let currentCancelFilter = 'todos';
+let renovFilter = 7;
+let reembolsos = JSON.parse(localStorage.getItem('reembolsos') || '[]');
+
+function initials(name) {
+  return name.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase();
+}
+
+function formatDate(ts) {
+  if (!ts) return '—';
+  return new Date(ts).toLocaleDateString('pt-BR');
+}
+
+function formatBRL(val) {
+  return 'R$ ' + Number(val).toFixed(2).replace('.', ',');
+}
+
+function planLabel(sub) {
+  const name = sub.plan?.name || '';
+  if (name.toLowerCase().includes('anual') || sub.plan?.recurrency_period >= 360) return 'Anual';
+  if (sub.plan?.recurrency_period >= 180) return 'Semestral';
+  return 'Mensal';
+}
+
+function statusBadge(status) {
+  const map = {
+    'ACTIVE': ['badge-active', 'Ativo'],
+    'DELAYED': ['badge-delayed', 'Inadimplente'],
+    'CANCELLED_BY_CUSTOMER': ['badge-cancelled', 'Cancelado'],
+    'CANCELLED_BY_SELLER': ['badge-cancelled', 'Cancelado'],
+    'INACTIVE': ['badge-inactive', 'Inativo'],
+  };
+  const [cls, label] = map[status] || ['badge-inactive', status];
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+
+function avatarColor(name) {
+  const colors = [
+    ['#E6F1FB','#185FA5'], ['#EAF3DE','#27500A'],
+    ['#EEEDFE','#3C3489'], ['#FAEEDA','#854F0B'],
+    ['#FAECE7','#993C1D']
+  ];
+  const i = (name.charCodeAt(0) || 0) % colors.length;
+  return colors[i];
+}
+
+async function fetchSubs(pageToken = null) {
+  let url = `${WORKER_URL}/?endpoint=subscriptions&max_results=50`;
+  if (pageToken) url += `&page_token=${pageToken}`;
+  const res = await fetch(url);
+  return res.json();
+}
+
+async function fetchCancelled() {
+  const res = await fetch(`${WORKER_URL}/?endpoint=subscriptions&max_results=50&status=CANCELLED_BY_CUSTOMER`);
+  return res.json();
+}
+
+async function loadAll() {
+  isLoading = true;
+  document.getElementById('listaAssinantes').innerHTML = '<div class="loading-state"><div class="loading-spinner"></div>Carregando assinantes…</div>';
+
+  try {
+    const data = await fetchSubs();
+    allSubscriptions = data.items || [];
+    nextPageToken = data.page_info?.next_page_token || null;
+
+    updateMetrics();
+    renderAssinantes();
+    renderRenovacoes();
+    renderCancelamentos();
+
+    document.getElementById('btnMaisAssinantes').style.display = nextPageToken ? 'block' : 'none';
+  } catch(e) {
+    document.getElementById('listaAssinantes').innerHTML = `<div class="error-state">Erro ao carregar dados. Verifique sua conexão e tente novamente.</div>`;
+  }
+  isLoading = false;
+}
+
+async function loadMore() {
+  if (!nextPageToken || isLoading) return;
+  isLoading = true;
+  document.getElementById('btnMaisAssinantes').textContent = 'Carregando…';
+  try {
+    const data = await fetchSubs(nextPageToken);
+    allSubscriptions = allSubscriptions.concat(data.items || []);
+    nextPageToken = data.page_info?.next_page_token || null;
+    updateMetrics();
+    renderAssinantes();
+  } catch(e) {}
+  document.getElementById('btnMaisAssinantes').textContent = 'Carregar mais';
+  document.getElementById('btnMaisAssinantes').style.display = nextPageToken ? 'block' : 'none';
+  isLoading = false;
+}
+
+function updateMetrics() {
+  const ativos = allSubscriptions.filter(s => s.status === 'ACTIVE').length;
+  const delayed = allSubscriptions.filter(s => s.status === 'DELAYED').length;
+  const anual = allSubscriptions.filter(s => planLabel(s) === 'Anual').length;
+  const cupom = allSubscriptions.filter(s => s.transaction && s.purchase?.coupon?.code).length;
+
+  document.getElementById('totalAtivos').textContent = ativos;
+  document.getElementById('totalDelayed').textContent = delayed;
+  document.getElementById('totalAnual').textContent = anual;
+  document.getElementById('totalCupom').textContent = cupom;
+}
+
+function getFilteredSubs() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  return allSubscriptions.filter(s => {
+    const name = s.subscriber?.name || '';
+    const email = s.subscriber?.email || '';
+    const matchSearch = !q || name.toLowerCase().includes(q) || email.toLowerCase().includes(q);
+    let matchPlano = true;
+    if (currentPlanoFilter === 'cupom') matchPlano = !!(s.purchase?.coupon?.code);
+    else if (currentPlanoFilter) matchPlano = planLabel(s) === currentPlanoFilter;
+    return matchSearch && matchPlano;
+  });
+}
+
+function renderAssinantes() {
+  const subs = getFilteredSubs();
+  const labels = { '': 'Todos os planos', 'Mensal': 'Plano mensal', 'Semestral': 'Plano semestral', 'Anual': 'Plano anual', 'cupom': 'Com cupom' };
+  document.getElementById('labelAssinantes').textContent = labels[currentPlanoFilter] || 'Todos';
+  document.getElementById('countAssinantes').textContent = subs.length + ' assinantes';
+
+  if (!subs.length) {
+    document.getElementById('listaAssinantes').innerHTML = '<div class="empty-state">Nenhum assinante encontrado.</div>';
+    return;
+  }
+
+  document.getElementById('listaAssinantes').innerHTML = subs.map(s => {
+    const name = s.subscriber?.name || 'Sem nome';
+    const email = s.subscriber?.email || '';
+    const ini = initials(name);
+    const [bg, fg] = avatarColor(name);
+    const plano = planLabel(s);
+    const nextCharge = formatDate(s.date_next_charge);
+    const cupomCode = s.purchase?.coupon?.code;
+    const cupomTag = cupomCode ? `<span class="badge badge-cupom">🎟 ${cupomCode}</span>` : '<span style="color:var(--gray-400);font-size:12px">Nenhum</span>';
+
+    return `<div class="card">
+      <div class="card-row">
+        <div class="avatar" style="background:${bg};color:${fg}">${ini}</div>
+        <div class="card-info">
+          <div class="card-name">${name}</div>
+          <div class="card-email">${email}</div>
+        </div>
+        ${statusBadge(s.status)}
+      </div>
+      <div class="divider"></div>
+      <div class="detail-row"><span class="detail-label">Plano</span><span class="detail-value">${plano}</span></div>
+      <div class="detail-row"><span class="detail-label">Próxima cobrança</span><span class="detail-value">${nextCharge}</span></div>
+      <div class="detail-row"><span class="detail-label">Valor</span><span class="detail-value">${formatBRL(s.price?.value || 0)}</span></div>
+      <div class="detail-row"><span class="detail-label">Cupom</span><span class="detail-value">${cupomTag}</span></div>
+    </div>`;
+  }).join('');
+}
+
+function renderRenovacoes() {
+  const now = Date.now();
+  const limit = now + renovFilter * 24 * 60 * 60 * 1000;
+  const upcoming = allSubscriptions
+    .filter(s => s.status === 'ACTIVE' && s.date_next_charge && s.date_next_charge >= now && s.date_next_charge <= limit)
+    .sort((a, b) => a.date_next_charge - b.date_next_charge);
+
+  const total = upcoming.length;
+  const receita = upcoming.reduce((acc, s) => acc + (s.price?.value || 0), 0);
+
+  document.getElementById('totalRenovacoes').textContent = total;
+  document.getElementById('receitaRenovacoes').textContent = total ? formatBRL(receita) : '—';
+
+  if (!upcoming.length) {
+    document.getElementById('listaRenovacoes').innerHTML = '<div class="empty-state">Nenhuma renovação prevista neste período.</div>';
+    return;
+  }
+
+  document.getElementById('listaRenovacoes').innerHTML = upcoming.map(s => {
+    const name = s.subscriber?.name || 'Sem nome';
+    const plano = planLabel(s);
+    const data = formatDate(s.date_next_charge);
+    return `<div class="renov-row">
+      <div><div class="renov-nome">${name}</div><div class="renov-meta">${plano} · ${data}</div></div>
+      <div class="renov-valor">${formatBRL(s.price?.value || 0)}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderCancelamentos() {
+  const now = Date.now();
+  const cancelled = allSubscriptions.filter(s =>
+    s.status === 'CANCELLED_BY_CUSTOMER' || s.status === 'CANCELLED_BY_SELLER' || s.status === 'INACTIVE'
+  );
+
+  let filtered = cancelled;
+  if (currentCancelFilter === '7dias') filtered = cancelled.filter(s => s.accession_date && (now - s.accession_date) <= 7 * 86400000);
+  else if (currentCancelFilter === '30dias') filtered = cancelled.filter(s => s.accession_date && (now - s.accession_date) <= 30 * 86400000);
+  else if (currentCancelFilter === 'cupom') filtered = cancelled.filter(s => s.purchase?.coupon?.code);
+  else if (['Mensal','Semestral','Anual'].includes(currentCancelFilter)) filtered = cancelled.filter(s => planLabel(s) === currentCancelFilter);
+
+  document.getElementById('totalCancelamentos').textContent = cancelled.length;
+  document.getElementById('cancelAnual').textContent = cancelled.filter(s => planLabel(s) === 'Anual').length;
+  document.getElementById('countCancelamentos').textContent = filtered.length + ' registros';
+
+  if (!filtered.length) {
+    document.getElementById('listaCancelamentos').innerHTML = '<div class="empty-state">Nenhum cancelamento encontrado.</div>';
+    return;
+  }
+
+  document.getElementById('listaCancelamentos').innerHTML = filtered.map(s => {
+    const name = s.subscriber?.name || 'Sem nome';
+    const email = s.subscriber?.email || '';
+    const ini = initials(name);
+    const [bg, fg] = avatarColor(name);
+    const plano = planLabel(s);
+    const data = formatDate(s.accession_date);
+    const cupomCode = s.purchase?.coupon?.code;
+    const cupomTag = cupomCode ? `<span class="badge badge-cupom" style="font-size:10px;padding:2px 6px;">🎟 ${cupomCode}</span>` : '';
+
+    return `<div class="card">
+      <div class="card-row">
+        <div class="avatar" style="background:${bg};color:${fg}">${ini}</div>
+        <div class="card-info">
+          <div class="card-name">${name}</div>
+          <div class="card-email">${email}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:12px;font-weight:500;color:var(--gray-600)">${plano}</div>
+          <div style="font-size:11px;color:var(--gray-400);margin-top:2px">${data}</div>
+          ${cupomTag}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderReembolsos() {
+  const now = Date.now();
+  document.getElementById('totalReembolsosAberto').textContent = reembolsos.filter(r => r.status === 'aberto').length;
+  document.getElementById('totalDentroPrazo').textContent = reembolsos.filter(r => {
+    const dias = (now - new Date(r.renovacao).getTime()) / 86400000;
+    return dias <= 7 && r.status === 'aberto';
+  }).length;
+
+  if (!reembolsos.length) {
+    document.getElementById('listaReembolsos').innerHTML = '<div class="empty-state">Nenhum pedido registrado.</div>';
+    return;
+  }
+
+  document.getElementById('listaReembolsos').innerHTML = reembolsos.map((r, i) => {
+    const dias = Math.floor((now - new Date(r.renovacao).getTime()) / 86400000);
+    const temDireito = dias <= 7;
+    const badgeClass = temDireito ? 'dias-ok' : 'dias-out';
+    const badgeText = temDireito ? `${dias} dias ✓` : `${dias} dias ✗`;
+
+    return `<div class="rcard">
+      <div class="rcard-header">
+        <div>
+          <div class="rcard-nome">${r.nome}</div>
+          <div class="rcard-meta">Renovação: ${r.renovacao} · Pedido: ${r.pedido}</div>
+          <div class="rcard-meta">${r.email}</div>
+        </div>
+        <span class="badge ${badgeClass}">${badgeText}</span>
+      </div>
+      <div class="btn-row">
+        <button class="btn" onclick="negarReembolso(${i})">Negar</button>
+        <button class="btn primary" ${!temDireito ? 'disabled' : ''} onclick="aprovarReembolso(${i})">Aprovar</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function addReembolso() {
+  const nome = prompt('Nome completo do assinante:');
+  if (!nome) return;
+  const email = prompt('E-mail do assinante:');
+  if (!email) return;
+  const renovacao = prompt('Data da renovação (DD/MM/AAAA):');
+  if (!renovacao) return;
+  const hoje = new Date().toLocaleDateString('pt-BR');
+  const [d, m, y] = renovacao.split('/');
+  reembolsos.unshift({ nome, email, renovacao: `${y}-${m}-${d}`, pedido: hoje, status: 'aberto' });
+  localStorage.setItem('reembolsos', JSON.stringify(reembolsos));
+  renderReembolsos();
+}
+
+function aprovarReembolso(i) {
+  reembolsos[i].status = 'aprovado';
+  localStorage.setItem('reembolsos', JSON.stringify(reembolsos));
+  alert(`Reembolso de ${reembolsos[i].nome} marcado como aprovado.\n\nLembre-se de solicitar o reembolso na Hotmart e criar o rascunho de e-mail.`);
+  renderReembolsos();
+}
+
+function negarReembolso(i) {
+  reembolsos[i].status = 'negado';
+  localStorage.setItem('reembolsos', JSON.stringify(reembolsos));
+  renderReembolsos();
+}
+
+function setPlanoFilter(val, el) {
+  currentPlanoFilter = val;
+  document.querySelectorAll('#panel-assinantes .chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderAssinantes();
+}
+
+function setCancelFilter(val, el) {
+  currentCancelFilter = val;
+  document.querySelectorAll('#panel-cancelamentos .chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderCancelamentos();
+}
+
+function setRenovFilter(days, el) {
+  renovFilter = days;
+  document.querySelectorAll('#panel-renovacoes .chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderRenovacoes();
+}
+
+function setReembolsoFilter(val, el) {
+  document.querySelectorAll('#panel-reembolsos .chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderReembolsos();
+}
+
+function switchTab(name, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('panel-' + name).classList.add('active');
+  if (name === 'reembolsos') renderReembolsos();
+}
+
+function onSearch() { renderAssinantes(); }
+
+function refreshData() {
+  const btn = document.getElementById('refreshBtn');
+  btn.classList.add('spinning');
+  allSubscriptions = [];
+  loadAll().finally(() => btn.classList.remove('spinning'));
+}
+
+loadAll();
+</script>
+</body>
+</html>
