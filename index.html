@@ -389,15 +389,8 @@ function avatarColor(name) {
   return colors[i];
 }
 
-async function fetchSubs(pageToken = null) {
-  let url = `${WORKER_URL}/?endpoint=subscriptions&max_results=50`;
-  if (pageToken) url += `&page_token=${pageToken}`;
-  const res = await fetch(url);
-  return res.json();
-}
-
-async function fetchCancelled() {
-  const res = await fetch(`${WORKER_URL}/?endpoint=subscriptions&max_results=50&status=CANCELLED_BY_CUSTOMER`);
+async function fetchSubs() {
+  const res = await fetch(`${WORKER_URL}/?endpoint=subscriptions&fetchAll=true`);
   return res.json();
 }
 
@@ -408,35 +401,20 @@ async function loadAll() {
   try {
     const data = await fetchSubs();
     allSubscriptions = data.items || [];
-    nextPageToken = data.page_info?.next_page_token || null;
 
     updateMetrics();
     renderAssinantes();
     renderRenovacoes();
     renderCancelamentos();
 
-    document.getElementById('btnMaisAssinantes').style.display = nextPageToken ? 'block' : 'none';
+    document.getElementById('btnMaisAssinantes').style.display = 'none';
   } catch(e) {
     document.getElementById('listaAssinantes').innerHTML = `<div class="error-state">Erro ao carregar dados. Verifique sua conexão e tente novamente.</div>`;
   }
   isLoading = false;
 }
 
-async function loadMore() {
-  if (!nextPageToken || isLoading) return;
-  isLoading = true;
-  document.getElementById('btnMaisAssinantes').textContent = 'Carregando…';
-  try {
-    const data = await fetchSubs(nextPageToken);
-    allSubscriptions = allSubscriptions.concat(data.items || []);
-    nextPageToken = data.page_info?.next_page_token || null;
-    updateMetrics();
-    renderAssinantes();
-  } catch(e) {}
-  document.getElementById('btnMaisAssinantes').textContent = 'Carregar mais';
-  document.getElementById('btnMaisAssinantes').style.display = nextPageToken ? 'block' : 'none';
-  isLoading = false;
-}
+
 
 function updateMetrics() {
   const ativos = allSubscriptions.filter(s => s.status === 'ACTIVE').length;
