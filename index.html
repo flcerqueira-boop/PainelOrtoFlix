@@ -259,11 +259,15 @@
 <!-- ASSINANTES -->
 <div id="panel-assinantes" class="panel active">
   <div class="filters-wrap">
-    <button class="chip active" onclick="setPlanoFilter('', this)">Todos</button>
-    <button class="chip" onclick="setPlanoFilter('Mensal', this)">Mensal</button>
-    <button class="chip" onclick="setPlanoFilter('Semestral', this)">Semestral</button>
-    <button class="chip" onclick="setPlanoFilter('Anual', this)">Anual</button>
-    <button class="chip" onclick="setPlanoFilter('cupom', this)">🎟 Com cupom</button>
+    <button class="chip active" onclick="setAssinanteFilter('todos', this)">Todos</button>
+    <button class="chip" onclick="setAssinanteFilter('ativos', this)">✅ Ativos</button>
+    <button class="chip" onclick="setAssinanteFilter('inadimplentes', this)">⚠️ Inadimp.</button>
+    <button class="chip" onclick="setAssinanteFilter('cancelados', this)">❌ Cancelados</button>
+    <button class="chip" onclick="setAssinanteFilter('inativos', this)">⬜ Inativos</button>
+    <button class="chip" onclick="setAssinanteFilter('mensal', this)">Mensal</button>
+    <button class="chip" onclick="setAssinanteFilter('semestral', this)">Semestral</button>
+    <button class="chip" onclick="setAssinanteFilter('anual', this)">Anual</button>
+    <button class="chip" onclick="setAssinanteFilter('cupom', this)">🎟 Cupom</button>
   </div>
   <div class="metrics" id="metricsAssinantes">
     <div class="metric"><div class="metric-label">Ativos</div><div class="metric-value green" id="totalAtivos">—</div></div>
@@ -342,7 +346,7 @@ const WORKER_URL = 'https://ortoflix-hotmart-proxy.flcerqueira.workers.dev';
 let allSubscriptions = [];
 let nextPageToken = null;
 let isLoading = false;
-let currentPlanoFilter = '';
+let currentAssinanteFilter = 'todos';
 let currentCancelFilter = 'todos';
 let renovFilter = 7;
 let reembolsos = JSON.parse(localStorage.getItem('reembolsos') || '[]');
@@ -434,17 +438,24 @@ function getFilteredSubs() {
     const name = s.subscriber?.name || '';
     const email = s.subscriber?.email || '';
     const matchSearch = !q || name.toLowerCase().includes(q) || email.toLowerCase().includes(q);
-    let matchPlano = true;
-    if (currentPlanoFilter === 'cupom') matchPlano = !!(s.purchase?.coupon?.code);
-    else if (currentPlanoFilter) matchPlano = planLabel(s) === currentPlanoFilter;
-    return matchSearch && matchPlano;
+    const status = s.status || '';
+    let match = true;
+    if (currentAssinanteFilter === 'ativos') match = status === 'ACTIVE';
+    else if (currentAssinanteFilter === 'inadimplentes') match = status === 'DELAYED';
+    else if (currentAssinanteFilter === 'cancelados') match = status.includes('CANCELLED');
+    else if (currentAssinanteFilter === 'inativos') match = status === 'INACTIVE';
+    else if (currentAssinanteFilter === 'mensal') match = planLabel(s) === 'Mensal';
+    else if (currentAssinanteFilter === 'semestral') match = planLabel(s) === 'Semestral';
+    else if (currentAssinanteFilter === 'anual') match = planLabel(s) === 'Anual';
+    else if (currentAssinanteFilter === 'cupom') match = !!(s.purchase?.coupon?.code);
+    return matchSearch && match;
   });
 }
 
 function renderAssinantes() {
   const subs = getFilteredSubs();
-  const labels = { '': 'Todos os planos', 'Mensal': 'Plano mensal', 'Semestral': 'Plano semestral', 'Anual': 'Plano anual', 'cupom': 'Com cupom' };
-  document.getElementById('labelAssinantes').textContent = labels[currentPlanoFilter] || 'Todos';
+  const labels = { 'todos': 'Todos', 'ativos': 'Ativos', 'inadimplentes': 'Inadimplentes', 'cancelados': 'Cancelados', 'inativos': 'Inativos', 'mensal': 'Plano mensal', 'semestral': 'Plano semestral', 'anual': 'Plano anual', 'cupom': 'Com cupom' };
+  document.getElementById('labelAssinantes').textContent = labels[currentAssinanteFilter] || 'Todos';
   document.getElementById('countAssinantes').textContent = subs.length + ' assinantes';
 
   if (!subs.length) {
@@ -620,8 +631,8 @@ function negarReembolso(i) {
   renderReembolsos();
 }
 
-function setPlanoFilter(val, el) {
-  currentPlanoFilter = val;
+function setAssinanteFilter(val, el) {
+  currentAssinanteFilter = val;
   document.querySelectorAll('#panel-assinantes .chip').forEach(c => c.classList.remove('active'));
   el.classList.add('active');
   renderAssinantes();
