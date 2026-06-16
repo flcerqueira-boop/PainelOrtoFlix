@@ -258,16 +258,18 @@
 
 <!-- ASSINANTES -->
 <div id="panel-assinantes" class="panel active">
-  <div class="filters-wrap">
-    <button class="chip active" onclick="setAssinanteFilter('todos', this)">Todos</button>
-    <button class="chip" onclick="setAssinanteFilter('ativos', this)">✅ Ativos</button>
-    <button class="chip" onclick="setAssinanteFilter('inadimplentes', this)">⚠️ Inadimp.</button>
-    <button class="chip" onclick="setAssinanteFilter('cancelados', this)">❌ Cancelados</button>
-    <button class="chip" onclick="setAssinanteFilter('inativos', this)">⬜ Inativos</button>
-    <button class="chip" onclick="setAssinanteFilter('mensal', this)">Mensal</button>
-    <button class="chip" onclick="setAssinanteFilter('semestral', this)">Semestral</button>
-    <button class="chip" onclick="setAssinanteFilter('anual', this)">Anual</button>
-    <button class="chip" onclick="setAssinanteFilter('cupom', this)">🎟 Cupom</button>
+  <div class="filters-wrap" id="filtros-status">
+    <button class="chip active" onclick="setStatusFilter('todos', this)">Todos</button>
+    <button class="chip" onclick="setStatusFilter('ativos', this)">✅ Ativos</button>
+    <button class="chip" onclick="setStatusFilter('inadimplentes', this)">⚠️ Inadimp.</button>
+    <button class="chip" onclick="setStatusFilter('cancelados', this)">❌ Cancelados</button>
+    <button class="chip" onclick="setStatusFilter('inativos', this)">⬜ Inativos</button>
+  </div>
+  <div class="filters-wrap" id="filtros-plano" style="margin-top:6px">
+    <button class="chip active" onclick="setPlanoFilter('todos', this)">Todos os planos</button>
+    <button class="chip" onclick="setPlanoFilter('mensal', this)">Mensal</button>
+    <button class="chip" onclick="setPlanoFilter('semestral', this)">Semestral</button>
+    <button class="chip" onclick="setPlanoFilter('anual', this)">Anual</button>
   </div>
   <div class="metrics" id="metricsAssinantes">
     <div class="metric"><div class="metric-label">Ativos</div><div class="metric-value green" id="totalAtivos">—</div></div>
@@ -346,7 +348,8 @@ const WORKER_URL = 'https://ortoflix-hotmart-proxy.flcerqueira.workers.dev';
 let allSubscriptions = [];
 let nextPageToken = null;
 let isLoading = false;
-let currentAssinanteFilter = 'todos';
+let currentStatusFilter = 'todos';
+let currentPlanoFilter = 'todos';
 let currentCancelFilter = 'todos';
 let renovFilter = 7;
 let reembolsos = JSON.parse(localStorage.getItem('reembolsos') || '[]');
@@ -439,23 +442,30 @@ function getFilteredSubs() {
     const email = s.subscriber?.email || '';
     const matchSearch = !q || name.toLowerCase().includes(q) || email.toLowerCase().includes(q);
     const status = s.status || '';
-    let match = true;
-    if (currentAssinanteFilter === 'ativos') match = status === 'ACTIVE';
-    else if (currentAssinanteFilter === 'inadimplentes') match = status === 'DELAYED';
-    else if (currentAssinanteFilter === 'cancelados') match = status.includes('CANCELLED');
-    else if (currentAssinanteFilter === 'inativos') match = status === 'INACTIVE';
-    else if (currentAssinanteFilter === 'mensal') match = planLabel(s) === 'Mensal';
-    else if (currentAssinanteFilter === 'semestral') match = planLabel(s) === 'Semestral';
-    else if (currentAssinanteFilter === 'anual') match = planLabel(s) === 'Anual';
-    else if (currentAssinanteFilter === 'cupom') match = !!(s.purchase?.coupon?.code);
-    return matchSearch && match;
+
+    let matchStatus = true;
+    if (currentStatusFilter === 'ativos') matchStatus = status === 'ACTIVE';
+    else if (currentStatusFilter === 'inadimplentes') matchStatus = status === 'DELAYED';
+    else if (currentStatusFilter === 'cancelados') matchStatus = status.includes('CANCELLED');
+    else if (currentStatusFilter === 'inativos') matchStatus = status === 'INACTIVE';
+
+    let matchPlano = true;
+    if (currentPlanoFilter === 'mensal') matchPlano = planLabel(s) === 'Mensal';
+    else if (currentPlanoFilter === 'semestral') matchPlano = planLabel(s) === 'Semestral';
+    else if (currentPlanoFilter === 'anual') matchPlano = planLabel(s) === 'Anual';
+
+    return matchSearch && matchStatus && matchPlano;
   });
 }
 
 function renderAssinantes() {
   const subs = getFilteredSubs();
-  const labels = { 'todos': 'Todos', 'ativos': 'Ativos', 'inadimplentes': 'Inadimplentes', 'cancelados': 'Cancelados', 'inativos': 'Inativos', 'mensal': 'Plano mensal', 'semestral': 'Plano semestral', 'anual': 'Plano anual', 'cupom': 'Com cupom' };
-  document.getElementById('labelAssinantes').textContent = labels[currentAssinanteFilter] || 'Todos';
+  const statusLabels = { 'todos': '', 'ativos': 'Ativos', 'inadimplentes': 'Inadimplentes', 'cancelados': 'Cancelados', 'inativos': 'Inativos' };
+  const planoLabels = { 'todos': '', 'mensal': 'Mensal', 'semestral': 'Semestral', 'anual': 'Anual' };
+  const sl = statusLabels[currentStatusFilter] || '';
+  const pl = planoLabels[currentPlanoFilter] || '';
+  const label = [sl, pl].filter(Boolean).join(' · ') || 'Todos';
+  document.getElementById('labelAssinantes').textContent = label;
   document.getElementById('countAssinantes').textContent = subs.length + ' assinantes';
 
   if (!subs.length) {
@@ -631,9 +641,16 @@ function negarReembolso(i) {
   renderReembolsos();
 }
 
-function setAssinanteFilter(val, el) {
-  currentAssinanteFilter = val;
-  document.querySelectorAll('#panel-assinantes .chip').forEach(c => c.classList.remove('active'));
+function setStatusFilter(val, el) {
+  currentStatusFilter = val;
+  document.querySelectorAll('#filtros-status .chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderAssinantes();
+}
+
+function setPlanoFilter(val, el) {
+  currentPlanoFilter = val;
+  document.querySelectorAll('#filtros-plano .chip').forEach(c => c.classList.remove('active'));
   el.classList.add('active');
   renderAssinantes();
 }
