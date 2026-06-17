@@ -118,7 +118,7 @@ async function gerar() {
     doc.setFontSize(35);
     doc.setCharSpace(0.4);
     doc.setTextColor(84, 84, 84);
-    doc.text(nome, 31.35, 90.72);
+    doc.text(nome, 31.35, 91.72);
     doc.setCharSpace(0);
 
     // ── DATA DA AVALIAÇÃO ─────────────────────────────
@@ -126,7 +126,7 @@ async function gerar() {
     doc.setFont('Montserrat', 'normal');
     doc.setFontSize(13);
     doc.setTextColor(84, 84, 84);
-    doc.text('Data da avaliação: ' + data + '.', 29.80, 125.46);
+    doc.text('Data da avaliação: ' + data + '.', 29.80, 128.46);
 
     // ── CARGA HORÁRIA ──────────────────────────────────
     // "Carga horária: " normal + "{horas} horas" bold + "."
@@ -134,13 +134,13 @@ async function gerar() {
     doc.setFontSize(13);
     doc.setTextColor(84, 84, 84);
     const label = 'Carga horária: ';
-    doc.text(label, 29.80, 133.68);
+    doc.text(label, 29.80, 136.68);
     const w1 = doc.getTextWidth(label);
     doc.setFont('Montserrat', 'bold');
-    doc.text(horas + ' horas', 29.80 + w1, 133.68);
+    doc.text(horas + ' horas', 29.80 + w1, 136.68);
     const w2 = w1 + doc.getTextWidth(horas + ' horas');
     doc.setFont('Montserrat', 'normal');
-    doc.text('.', 29.80 + w2, 133.68);
+    doc.text('.', 29.80 + w2, 136.68);
 
     // ── Download ────────────────────────────────────────
     doc.save('Certificado_OrtoFlix_' + nome.replace(/\s+/g, '_') + '.pdf');
