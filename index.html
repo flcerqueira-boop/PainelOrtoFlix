@@ -463,32 +463,30 @@
     </div>
   </div>
 
-  <!-- Prévia -->
+  <!-- Previa reduzida (visual) -->
   <div class="cert-preview-wrap" id="cert-preview-wrap" style="display:none">
-    <div class="cert-preview-label">Prévia do certificado</div>
+    <div class="cert-preview-label">Previa do certificado</div>
     <div class="cert-scale">
-      <div id="cert-canvas">
-        <div class="cb-tl-black"></div>
-        <div class="cb-tl-red"></div>
-        <div class="cb-tr-gray"></div>
-        <div class="cb-tr-black"></div>
+      <div style="position:relative;width:1123px;height:794px;background:#fff;overflow:hidden;font-family:'Georgia',serif;">
+        <div class="cb-tl-black"></div><div class="cb-tl-red"></div>
+        <div class="cb-tr-gray"></div><div class="cb-tr-black"></div>
         <div class="cb-inner">
           <div class="cb-header">
             <div class="cb-title">Certificado</div>
             <div class="cb-logo-block">
               <div class="cb-logo-text"><span class="ort">ORT</span><span class="ofl">OFLIX</span></div>
-              <div class="cb-tagline">Streaming de Fisioterapia Ortopédica</div>
+              <div class="cb-tagline">Streaming de Fisioterapia Ortopedica</div>
             </div>
           </div>
           <div class="cb-body">
             <div class="cb-certifica">Certificamos que</div>
             <div class="cb-nome" id="cv-nome">NOME DO ASSINANTE</div>
             <div class="cb-texto">
-              obteve <b>aprovação</b> no <span id="cv-ciclo">Ciclo 01</span> do programa de
-              <b id="cv-programa">Aperfeiçoamento em Fisioterapia Ortopédica</b>
-              por meio da plataforma <b>OrtoFlix</b>, com avaliação
-              realizada em <span id="cv-data">— de — de ——</span>, equivalente a
-              <b><span id="cv-carga">120</span> horas</b> de atualização ortopédica.
+              obteve <b>aprovacao</b> no <span id="cv-ciclo">Ciclo 01</span> do programa de
+              <b id="cv-programa">Aperfeicoamento em Fisioterapia Ortopedica</b>
+              por meio da plataforma <b>OrtoFlix</b>, com avaliacao
+              realizada em <span id="cv-data">de de</span>, equivalente a
+              <b><span id="cv-carga">120</span> horas</b> de atualizacao ortopedica.
             </div>
           </div>
           <div class="cb-assinatura">
@@ -505,6 +503,38 @@
   <div class="cert-actions">
     <button class="btn primary" onclick="certVisualizar()">Visualizar certificado</button>
     <button class="btn" id="cert-dl-btn" style="display:none" onclick="certBaixar()">⬇ Baixar PDF</button>
+  </div>
+</div>
+
+<!-- Elemento REAL para captura do PDF - oculto, tamanho original -->
+<div id="cert-canvas" style="position:fixed;left:-9999px;top:0;width:1123px;height:794px;background:#fff;overflow:hidden;font-family:'Georgia',serif;">
+  <div class="cb-tl-black"></div><div class="cb-tl-red"></div>
+  <div class="cb-tr-gray"></div><div class="cb-tr-black"></div>
+  <div class="cb-inner">
+    <div class="cb-header">
+      <div class="cb-title">Certificado</div>
+      <div class="cb-logo-block">
+        <div class="cb-logo-text"><span class="ort">ORT</span><span class="ofl">OFLIX</span></div>
+        <div class="cb-tagline">Streaming de Fisioterapia Ortopédica</div>
+      </div>
+    </div>
+    <div class="cb-body">
+      <div class="cb-certifica">Certificamos que</div>
+      <div class="cb-nome" id="cr-nome">NOME DO ASSINANTE</div>
+      <div class="cb-texto">
+        obteve <b>aprovação</b> no <span id="cr-ciclo">Ciclo 01</span> do programa de
+        <b id="cr-programa">Aperfeiçoamento em Fisioterapia Ortopédica</b>
+        por meio da plataforma <b>OrtoFlix</b>, com avaliação
+        realizada em <span id="cr-data">— de — de ——</span>, equivalente a
+        <b><span id="cr-carga">120</span> horas</b> de atualização ortopédica.
+      </div>
+    </div>
+    <div class="cb-assinatura">
+      <div class="cb-linha"></div>
+      <div class="cb-nome-assina">Dr. Felipe Cerqueira</div>
+      <div class="cb-cargo">Fisioterapeuta (132351F)</div>
+      <div class="cb-cargo">Diretor da OrtoFlix</div>
+    </div>
   </div>
 </div>
 
@@ -931,11 +961,21 @@ function certVisualizar() {
 
   if (!nome) { alert('Selecione ou digite o nome do assinante.'); return; }
 
-  document.getElementById('cv-nome').textContent    = nome.toUpperCase();
-  document.getElementById('cv-ciclo').textContent   = ciclo;
-  document.getElementById('cv-carga').textContent   = carga;
-  document.getElementById('cv-programa').textContent= programa;
-  document.getElementById('cv-data').textContent    = certFormatarData(data);
+  const dataFmt = certFormatarData(data);
+
+  // Prévia (visual reduzido)
+  document.getElementById('cv-nome').textContent     = nome.toUpperCase();
+  document.getElementById('cv-ciclo').textContent    = ciclo;
+  document.getElementById('cv-carga').textContent    = carga;
+  document.getElementById('cv-programa').textContent = programa;
+  document.getElementById('cv-data').textContent     = dataFmt;
+
+  // Elemento real (para PDF)
+  document.getElementById('cr-nome').textContent     = nome.toUpperCase();
+  document.getElementById('cr-ciclo').textContent    = ciclo;
+  document.getElementById('cr-carga').textContent    = carga;
+  document.getElementById('cr-programa').textContent = programa;
+  document.getElementById('cr-data').textContent     = dataFmt;
 
   document.getElementById('cert-preview-wrap').style.display = 'block';
   document.getElementById('cert-dl-btn').style.display = 'inline-block';
@@ -947,7 +987,15 @@ async function certBaixar() {
   btn.textContent = 'Gerando PDF…'; btn.disabled = true;
   try {
     const el = document.getElementById('cert-canvas');
-    const canvas = await html2canvas(el, { scale: 3, useCORS: true, backgroundColor: '#ffffff', width: 1123, height: 794 });
+    const canvas = await html2canvas(el, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      width: 1123,
+      height: 794,
+      windowWidth: 1123,
+      windowHeight: 794
+    });
     const imgData = canvas.toDataURL('image/jpeg', 0.97);
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
