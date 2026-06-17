@@ -109,29 +109,30 @@ async function gerar() {
     // ── NOME DO ALUNO ─────────────────────────────────────
     // Montserrat Bold, size 32pt, cor #545454
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(19);
+    doc.setFontSize(24);
     doc.setTextColor(84, 84, 84);
-    doc.text(nome, 31.35, 80.72);
+    doc.text(nome, 31.35, 95.72);
 
     // ── DATA DA AVALIAÇÃO ─────────────────────────────
     // "Data da avaliação: {data}."  Regular, size 17pt
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(11);
-    doc.setTextColor(34, 34, 34);
-    doc.text('Data da avaliação: ' + data + '.', 29.80, 123.46);
+    doc.setFontSize(13);
+    doc.setTextColor(84, 84, 84);
+    doc.text('Data da avaliação: ' + data + '.', 29.80, 138.46);
 
     // ── CARGA HORÁRIA ──────────────────────────────────
     // "Carga horária: " normal + "{horas} horas" bold + "."
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(11);
+    doc.setFontSize(13);
+    doc.setTextColor(84, 84, 84);
     const label = 'Carga horária: ';
-    doc.text(label, 29.80, 131.68);
+    doc.text(label, 29.80, 146.68);
     const w1 = doc.getTextWidth(label);
     doc.setFont('helvetica', 'bold');
-    doc.text(horas + ' horas', 29.80 + w1, 131.68);
+    doc.text(horas + ' horas', 29.80 + w1, 146.68);
     const w2 = w1 + doc.getTextWidth(horas + ' horas');
     doc.setFont('helvetica', 'normal');
-    doc.text('.', 29.80 + w2, 131.68);
+    doc.text('.', 29.80 + w2, 146.68);
 
     // ── Download ────────────────────────────────────────
     doc.save('Certificado_OrtoFlix_' + nome.replace(/\s+/g, '_') + '.pdf');
