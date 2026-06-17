@@ -6,7 +6,6 @@
 <title>OrtoFlix Painel</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -982,27 +981,165 @@ function certVisualizar() {
   document.getElementById('cert-preview-wrap').scrollIntoView({ behavior: 'smooth' });
 }
 
-async function certBaixar() {
+function certBaixar() {
   const btn = document.getElementById('cert-dl-btn');
   btn.textContent = 'Gerando PDF…'; btn.disabled = true;
+
   try {
-    const el = document.getElementById('cert-canvas');
-    const canvas = await html2canvas(el, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: '#ffffff',
-      width: 1123,
-      height: 794,
-      windowWidth: 1123,
-      windowHeight: 794
-    });
-    const imgData = canvas.toDataURL('image/jpeg', 0.97);
+    const nome    = document.getElementById('cert-busca').dataset.nome
+                    || document.getElementById('cert-busca').value.split('—')[0].trim();
+    const ciclo   = document.getElementById('cert-ciclo').value.trim() || 'Ciclo 01';
+    const carga   = document.getElementById('cert-carga').value.trim() || '120';
+    const programa= document.getElementById('cert-programa').value.trim();
+    const dataFmt = certFormatarData(document.getElementById('cert-data').value);
+
     const { jsPDF } = window.jspdf;
+    // A4 paisagem: 297 x 210 mm
     const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-    pdf.addImage(imgData, 'JPEG', 0, 0, 297, 210);
-    const nome = (document.getElementById('cert-busca').dataset.nome || 'assinante').replace(/\s+/g,'_');
-    pdf.save(`Certificado_OrtoFlix_${nome}.pdf`);
+    const W = 297, H = 210;
+
+    // ── Fundo branco
+    pdf.setFillColor(255,255,255);
+    pdf.rect(0, 0, W, H, 'F');
+
+    // ── Borda esquerda preta
+    pdf.setFillColor(26,26,26);
+    pdf.rect(0, 0, 26, H, 'F');
+
+    // ── Traço vermelho (sobre borda esquerda)
+    pdf.setFillColor(224,25,25);
+    pdf.rect(7, 7, 21, 5, 'F');
+
+    // ── Borda direita cinza
+    pdf.setFillColor(200,200,200);
+    pdf.rect(W-18, 0, 10, H, 'F');
+
+    // ── Borda direita preta
+    pdf.setFillColor(26,26,26);
+    pdf.rect(W-8, 0, 8, H, 'F');
+
+    // ── Título "Certificado"
+    pdf.setFont('times', 'bold');
+    pdf.setFontSize(36);
+    pdf.setTextColor(45,45,45);
+    pdf.text('Certificado', 32, 38);
+
+    // ── Logo ORTOFLIX
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(22);
+    pdf.setTextColor(45,45,45);
+    pdf.text('ORT', W-90, 28);
+    pdf.setTextColor(224,25,25);
+    pdf.text('OFLIX', W-71, 28);
+
+    // ── Tagline logo
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(6);
+    pdf.setTextColor(45,45,45);
+    pdf.setCharSpace(1.5);
+    pdf.text('STREAMING DE FISIOTERAPIA ORTOPÉDICA', W-90, 33);
+    pdf.setCharSpace(0);
+
+    // ── "Certificamos que"
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(10);
+    pdf.setTextColor(100,100,100);
+    pdf.text('Certificamos que', 32, 58);
+
+    // ── Nome do aluno
+    pdf.setFont('times', 'bold');
+    pdf.setFontSize(22);
+    pdf.setTextColor(26,26,26);
+    pdf.text(nome.toUpperCase(), 32, 72);
+
+    // ── Texto do certificado (com quebra de linha)
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(10);
+    pdf.setTextColor(45,45,45);
+
+    // Monta texto com partes em negrito intercaladas
+    const partes = [
+      { txt: 'obteve ', bold: false },
+      { txt: 'aprovação', bold: true },
+      { txt: ` no ${ciclo} do programa de `, bold: false },
+      { txt: programa, bold: true },
+      { txt: ' por meio da plataforma ', bold: false },
+      { txt: 'OrtoFlix', bold: true },
+      { txt: ', com avaliação realizada em ', bold: false },
+      { txt: dataFmt, bold: false },
+      { txt: ', equivalente a ', bold: false },
+      { txt: `${carga} horas`, bold: true },
+      { txt: ' de atualização ortopédica.', bold: false },
+    ];
+
+    // Renderiza linha a linha com mixed bold
+    const maxW = W - 32 - 26; // área útil
+    let x = 32, y = 84, lineH = 6.5;
+    const spaceW = pdf.getTextWidth(' ');
+
+    // Tokenizar em palavras com estilo
+    const tokens = [];
+    partes.forEach(p => {
+      const words = p.txt.split(' ');
+      words.forEach((w, i) => {
+        if (w) tokens.push({ w: (i > 0 || tokens.length > 0 ? ' ' : '') + w, bold: p.bold });
+      });
+    });
+
+    // Juntar em palavras reais para quebra
+    let lineTokens = [];
+    let lineWidth = 0;
+
+    function flushLine(tokens, atX, atY) {
+      let cx = atX;
+      tokens.forEach(t => {
+        pdf.setFont('helvetica', t.bold ? 'bold' : 'normal');
+        pdf.text(t.w, cx, atY);
+        cx += pdf.getTextWidth(t.w);
+      });
+    }
+
+    tokens.forEach(tok => {
+      pdf.setFont('helvetica', tok.bold ? 'bold' : 'normal');
+      const tw = pdf.getTextWidth(tok.w);
+      if (lineWidth + tw > maxW && lineTokens.length > 0) {
+        flushLine(lineTokens, x, y);
+        y += lineH;
+        // Remove espaço inicial da nova linha
+        const first = { ...lineTokens[0] };
+        lineTokens = [{ w: tok.w.trimStart(), bold: tok.bold }];
+        lineWidth = pdf.getTextWidth(tok.w.trimStart());
+      } else {
+        lineTokens.push(tok);
+        lineWidth += tw;
+      }
+    });
+    if (lineTokens.length) flushLine(lineTokens, x, y);
+
+    // ── Linha de assinatura
+    const sigY = H - 42;
+    pdf.setDrawColor(26,26,26);
+    pdf.setLineWidth(0.3);
+    pdf.line(32, sigY, 90, sigY);
+
+    // ── Nome e cargo
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(9);
+    pdf.setTextColor(26,26,26);
+    pdf.text('Dr. Felipe Cerqueira', 32, sigY + 5);
+
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(8);
+    pdf.setTextColor(80,80,80);
+    pdf.text('Fisioterapeuta (132351F)', 32, sigY + 10);
+    pdf.text('Diretor da OrtoFlix', 32, sigY + 15);
+
+    // ── Salvar
+    const nomeArq = nome.replace(/\s+/g,'_');
+    pdf.save(`Certificado_OrtoFlix_${nomeArq}.pdf`);
+
   } catch(e) { alert('Erro ao gerar PDF: ' + e.message); }
+
   btn.textContent = '⬇ Baixar PDF'; btn.disabled = false;
 }
 
