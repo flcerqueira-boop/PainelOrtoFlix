@@ -273,10 +273,10 @@
   </div>
   <div class="filters-wrap" id="filtros-periodo" style="margin-top:6px">
     <button class="chip active" onclick="setPeriodoFilter('todos', this)">Todo período</button>
-    <button class="chip" onclick="setPeriodoFilter('hoje', this)">Hoje</button>
-    <button class="chip" onclick="setPeriodoFilter('7dias', this)">7 dias</button>
-    <button class="chip" onclick="setPeriodoFilter('30dias', this)">30 dias</button>
-    <button class="chip" onclick="setPeriodoFilter('90dias', this)">90 dias</button>
+    <button class="chip" onclick="setPeriodoFilter('novos-7', this)">🆕 Novos 7d</button>
+    <button class="chip" onclick="setPeriodoFilter('novos-30', this)">🆕 Novos 30d</button>
+    <button class="chip" onclick="setPeriodoFilter('transacao-7', this)">💳 Transação 7d</button>
+    <button class="chip" onclick="setPeriodoFilter('transacao-30', this)">💳 Transação 30d</button>
   </div>
   <div class="metrics" id="metricsAssinantes">
     <div class="metric"><div class="metric-label">Ativos</div><div class="metric-value green" id="totalAtivos">—</div></div>
@@ -446,9 +446,7 @@ function updateMetrics() {
 function getFilteredSubs() {
   const q = document.getElementById('searchInput').value.toLowerCase();
   const now = Date.now();
-  const periodoMap = { 'hoje': 1, '7dias': 7, '30dias': 30, '90dias': 90 };
-  const diasFiltro = periodoMap[currentPeriodoFilter] || null;
-
+  const now = Date.now();
   return allSubscriptions.filter(s => {
     const name = s.subscriber?.name || '';
     const email = s.subscriber?.email || '';
@@ -467,10 +465,10 @@ function getFilteredSubs() {
     else if (currentPlanoFilter === 'anual') matchPlano = planLabel(s) === 'Anual';
 
     let matchPeriodo = true;
-    if (diasFiltro) {
-      const limite = now - diasFiltro * 24 * 60 * 60 * 1000;
-      matchPeriodo = s.accession_date && s.accession_date >= limite;
-    }
+    if (currentPeriodoFilter === 'novos-7') matchPeriodo = s.accession_date && s.accession_date >= now - 7*86400000;
+    else if (currentPeriodoFilter === 'novos-30') matchPeriodo = s.accession_date && s.accession_date >= now - 30*86400000;
+    else if (currentPeriodoFilter === 'transacao-7') matchPeriodo = s.request_date && s.request_date >= now - 7*86400000;
+    else if (currentPeriodoFilter === 'transacao-30') matchPeriodo = s.request_date && s.request_date >= now - 30*86400000;
 
     return matchSearch && matchStatus && matchPlano && matchPeriodo;
   });
@@ -480,7 +478,7 @@ function renderAssinantes() {
   const subs = getFilteredSubs();
   const statusLabels = { 'todos': '', 'ativos': 'Ativos', 'inadimplentes': 'Inadimplentes', 'cancelados': 'Cancelados', 'inativos': 'Inativos' };
   const planoLabels = { 'todos': '', 'mensal': 'Mensal', 'semestral': 'Semestral', 'anual': 'Anual' };
-  const periodoLabels = { 'todos': '', 'hoje': 'Hoje', '7dias': 'Últimos 7 dias', '30dias': 'Últimos 30 dias', '90dias': 'Últimos 90 dias' };
+  const periodoLabels = { 'todos': '', 'novos-7': 'Novos 7d', 'novos-30': 'Novos 30d', 'transacao-7': 'Transação 7d', 'transacao-30': 'Transação 30d' };
   const sl = statusLabels[currentStatusFilter] || '';
   const pl = planoLabels[currentPlanoFilter] || '';
   const per = periodoLabels[currentPeriodoFilter] || '';
@@ -514,6 +512,7 @@ function renderAssinantes() {
       </div>
       <div class="divider"></div>
       <div class="detail-row"><span class="detail-label">Plano</span><span class="detail-value">${plano}</span></div>
+      <div class="detail-row"><span class="detail-label">Assinante desde</span><span class="detail-value">${formatDate(s.accession_date)}</span></div>
       <div class="detail-row"><span class="detail-label">Próxima cobrança</span><span class="detail-value">${nextCharge}</span></div>
       <div class="detail-row"><span class="detail-label">Valor</span><span class="detail-value">${formatBRL(s.price?.value || 0)}</span></div>
       <div class="detail-row"><span class="detail-label">Cupom</span><span class="detail-value">${cupomTag}</span></div>
